@@ -124,9 +124,11 @@ A: 检查Webhook地址是否正确，可通过「测试连接」功能验证。
 
 ### Q: 如何在自定义消息或者大模型消息中@全员？
 A: 保证飞书消息中有"@所有人”即可
-![img.png](img/img_2.png)
-![img.png](img/img_3.png)
 
+<div align="center">
+  <img src="img/img_2.png" width="45%" style="display: inline-block; margin: 10px;" alt="管理界面截图1"/>
+  <img src="img/img_3.png" width="45%" style="display: inline-block; margin: 10px;" alt="管理界面截图2"/>
+</div>
 
 ### Q: 服务重启后任务会丢失吗？
 A: 不会，任务配置存储在SQLite数据库中，重启后会自动加载。
