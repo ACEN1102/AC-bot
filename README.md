@@ -10,13 +10,34 @@ Python开发的飞书群聊播报机器人，支持定时向飞书群发送自�
 - **Webhook测试功能**：方便测试飞书机器人连接是否正常
 - **执行日志记录**：记录所有任务执行情况，便于问题排查
 - **数据持久化**：使用SQLite数据库存储任务配置
+- **分层架构设计**：清晰的代码结构，便于维护和扩展
+
+## 项目结构
+
+```
+AC-bot/
+├── app.py                 # 启动文件
+├── controllers/           # 控制器层
+│   ├── task_controller.py  # 任务相关接口
+│   ├── log_controller.py   # 日志相关接口
+│   └── test_controller.py  # 测试相关接口
+├── services/              # 服务层
+│   ├── task_service.py     # 任务业务逻辑
+│   ├── log_service.py      # 日志业务逻辑
+│   ├── feishu_service.py   # 飞书消息发送
+│   └── ai_service.py       # AI新闻和大模型调用
+├── models/                # 数据模型层
+│   └── db.py               # 数据库连接和初始化
+└── scheduler/             # 调度器
+    └── task_scheduler.py   # 任务调度逻辑
+```
 
 ## 安装指南
 
 ### 方法一：直接运行
 
 ```bash
-python feishu_bot.py
+python app.py
 ```
 
 启动后，访问 `http://localhost:9096` 即可进入管理界面。
