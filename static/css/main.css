@@ -1,0 +1,197 @@
+/* 全局样式 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* 导航栏样式 */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+    font-weight: bold;
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.btn-primary:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+.btn-success {
+    background-color: #52c41a;
+    border-color: #52c41a;
+}
+
+.btn-success:hover {
+    background-color: #73d13d;
+    border-color: #73d13d;
+}
+
+.btn-danger {
+    background-color: #ff4d4f;
+    border-color: #ff4d4f;
+}
+
+.btn-danger:hover {
+    background-color: #ff7875;
+    border-color: #ff7875;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+/* 表格样式 */
+.table {
+    background-color: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.table th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #262626;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* 表单样式 */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    outline: 0;
+}
+
+/* 模态框样式 */
+.modal-content {
+    border-radius: 8px;
+    border: none;
+}
+
+.modal-header {
+    background-color: #1890ff;
+    color: #fff;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+/* 日志容器样式 */
+#logContainer {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #f6f8fa;
+}
+
+/* 状态标签样式 */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: #f6ffed;
+    color: #52c41a;
+    border: 1px solid #b7eb8f;
+}
+
+.status-inactive {
+    background-color: #fff2e8;
+    color: #fa8c16;
+    border: 1px solid #ffd591;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card-body {
+    animation: fadeIn 0.4s ease;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .navbar-nav {
+        margin-top: 10px;
+    }
+    
+    .table {
+        font-size: 14px;
+    }
+    
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+    }
+}

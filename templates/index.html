@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AC-飞书BOT控制台</title>
+    <!-- 使用emoji作为favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🤖</text></svg>" type="image/svg+xml">
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- 配置Tailwind主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#4f46e5',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6',
+                        light: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .transition-all-300 {
+                transition: all 0.3s ease;
+            }
+            .scale-hover {
+                transition: transform 0.2s ease;
+            }
+            .scale-hover:hover {
+                transform: scale(1.02);
+            }
+        }
+    </style>
+    <!-- 引入自定义CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+
+</head>
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-primary text-white p-2 rounded-lg">
+                    <i class="fa fa-paper-plane-o text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold text-dark">💫AC-飞书BOT控制台</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div id="live-clock" class="flex items-center text-gray-600 text-sm bg-gray-100 px-3 py-1.5 rounded-lg">
+                    <i class="fa fa-clock-o mr-2"></i>
+                    <span id="current-time"></span>
+                </div>
+                <button id="test-connection-btn" class="flex items-center px-4 py-2 bg-info text-white rounded-lg transition-all-300 hover:bg-info/90">
+                    <i class="fa fa-bolt mr-2"></i>
+                    <span>测试连接</span>
+                </button>
+                <button id="add-task-btn" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg transition-all-300 hover:bg-primary/90">
+                    <i class="fa fa-plus mr-2"></i>
+                    <span>新建任务</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 任务统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 card-shadow scale-hover" id="total-tasks-card">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-gray-500 mb-1">总任务数</p>
+                        <h3 class="text-3xl font-bold text-dark">0</h3>
+                    </div>
+                    <div class="bg-blue-100 text-primary p-3 rounded-lg">
+                        <i class="fa fa-tasks text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">
+                    <span>包含已启用和已禁用任务</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 card-shadow scale-hover" id="enabled-tasks-card">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-gray-500 mb-1">已启用任务</p>
+                        <h3 class="text-3xl font-bold text-success">0</h3>
+                    </div>
+                    <div class="bg-green-100 text-success p-3 rounded-lg">
+                        <i class="fa fa-check-circle text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">
+                    <span>当前活跃的定时任务</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 card-shadow scale-hover" id="recent-logs-card">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-gray-500 mb-1">最近执行状态</p>
+                        <h3 class="text-3xl font-bold text-warning" id="recent-status-text">暂无数据</h3>
+                    </div>
+                    <div class="bg-amber-100 text-warning p-3 rounded-lg">
+                        <i class="fa fa-history text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">
+                    <span id="recent-status-time">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务列表 -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-dark">任务列表</h2>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="task-search" placeholder="搜索任务名称..." class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    <button id="refresh-tasks-btn" class="p-2 text-gray-500 hover:text-primary transition-all-300">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">任务名称</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">执行时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">星期几</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="task-list-body">
+                        <!-- 任务列表内容将通过JavaScript动态生成 -->
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="fa fa-calendar-check-o text-4xl mb-3 text-gray-300"></i>
+                                    <p>暂无任务，请点击上方"新建任务"按钮创建</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 最近执行日志 -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-dark">最近执行日志</h2>
+                <button id="clear-logs-btn" class="text-sm text-danger hover:underline">
+                    清空日志
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">任务名称</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">消息</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">执行时间</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="logs-list-body">
+                        <!-- 日志列表内容将通过JavaScript动态生成 -->
+                        <tr>
+                            <td colspan="4" class="px-6 py-10 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="fa fa-history text-4xl mb-3 text-gray-300"></i>
+                                    <p>暂无执行日志</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>🤖 AC-bot 😎</p>
+            <p class="text-gray-400 text-sm mt-2">v 1.0.1</p>
+        </div>
+    </footer>
+
+    <!-- 创建/编辑任务模态框 -->
+    <div id="task-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-dark" id="modal-title">新建任务</h3>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-all-300">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="task-form">
+                    <input type="hidden" id="task-id" value="">
+                    
+                    <!-- 任务名称 -->
+                    <div class="mb-4">
+                        <label for="task-name" class="block text-sm font-medium text-gray-700 mb-1">任务名称 <span class="text-danger">*</span></label>
+                        <input type="text" id="task-name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入任务名称" required>
+                    </div>
+                    
+                    <!-- 任务类型 -->
+                    <div class="mb-4">
+                        <label for="task-type" class="block text-sm font-medium text-gray-700 mb-1">任务类型 <span class="text-danger">*</span></label>
+                        <select id="task-type" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+                            <option value="">请选择任务类型</option>
+                            <option value="custom">自定义消息</option>
+                            <option value="ai_news">AI新闻</option>
+                            <option value="llm">大模型内容</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 飞书Webhook URL -->
+                    <div class="mb-4">
+                        <label for="webhook-url" class="block text-sm font-medium text-gray-700 mb-1">飞书Webhook URL <span class="text-danger">*</span></label>
+                        <input type="url" id="webhook-url" name="webhook_url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入飞书Webhook URL" required>
+                        <p class="text-xs text-gray-500 mt-1">请在飞书群机器人设置中获取Webhook地址</p>
+                    </div>
+                    
+                    <!-- 执行时间 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">执行时间 <span class="text-danger">*</span></label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="task-hour" name="hour" min="0" max="23" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="时" required>
+                            <span class="text-gray-500">:</span>
+                            <input type="number" id="task-minute" name="minute" min="0" max="59" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="分" required>
+                            <span class="text-gray-500">:</span>
+                            <input type="number" id="task-second" name="second" min="0" max="59" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="秒" required>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">请设置任务执行的具体时间（24小时制）</p>
+                    </div>
+                    
+                    <!-- 执行星期 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">执行星期</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="1" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周一</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="2" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周二</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="3" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周三</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="4" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周四</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="5" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周五</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="6" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周六</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="days_of_week" value="0" class="form-checkbox h-5 w-5 text-primary rounded">
+                                <span class="ml-2 text-sm text-gray-700">周日</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">不选择则表示每天执行</p>
+                    </div>
+                    
+                    <!-- 自定义消息内容（根据任务类型显示/隐藏） -->
+                    <div id="custom-content-section" class="mb-4 hidden">
+                        <label for="task-content" class="block text-sm font-medium text-gray-700 mb-1">消息内容 <span class="text-danger">*</span></label>
+                        <textarea id="task-content" name="custom_content" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入要播报的消息内容"></textarea>
+                    </div>
+                    
+                    <!-- AI新闻配置（根据任务类型显示/隐藏） -->
+                    <div id="ai-news-config-section" class="mb-4 hidden">
+                        <div class="mb-3">
+                            <label for="ai-news-url" class="block text-sm font-medium text-gray-700 mb-1">60sAPI URL <span class="text-danger">*</span></label>
+                            <input type="url" id="ai-news-url" name="ai_news_url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：http://127.0.0.1:4399/v2/ai-news">
+                        </div>
+                    </div>
+                    
+                    <!-- 大模型配置（根据任务类型显示/隐藏） -->
+                    <div id="llm-config-section" class="mb-4 hidden">
+                        <div class="mb-3">
+                            <label for="llm-prompt" class="block text-sm font-medium text-gray-700 mb-1">提示词 <span class="text-danger">*</span></label>
+                            <textarea id="llm-prompt" name="llm_prompt" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入大模型提示词"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="llm-model-name" class="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
+                            <input type="text" id="llm-model-name" name="llm_model_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：deepseek-chat，不填则使用此默认值">
+                        </div>
+                        <div class="mb-3">
+                            <label for="llm-api-url" class="block text-sm font-medium text-gray-700 mb-1">API URL <span class="text-danger">*</span></label>
+                            <input type="url" id="llm-api-url" name="llm_api_url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：https://api.deepseek.com"></input>
+                        </div>
+                        <div class="mb-3">
+                            <label for="llm-api-key" class="block text-sm font-medium text-gray-700 mb-1">API Key <span class="text-danger">*</span></label>
+                            <input type="password" id="llm-api-key" name="llm_api_key" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入API密钥"></input>
+                            <p class="text-xs text-gray-500 mt-1">请确保API密钥安全，系统不会明文存储</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 任务状态 -->
+                    <div class="mb-6">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="task-enabled" name="enabled" class="form-checkbox h-5 w-5 text-primary rounded" checked>
+                            <span class="ml-2 text-sm text-gray-700">启用任务</span>
+                        </label>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-task-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all-300">
+                            取消
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">
+                            <i class="fa fa-save mr-1"></i> 保存任务
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试连接模态框 -->
+    <div id="test-connection-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-dark">测试Webhook连接</h3>
+                    <button id="close-test-modal-btn" class="text-gray-400 hover:text-gray-600 transition-all-300">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="test-connection-form">
+                    <div class="mb-4">
+                        <label for="test-webhook-url" class="block text-sm font-medium text-gray-700 mb-1">飞书Webhook URL <span class="text-danger">*</span></label>
+                        <input type="url" id="test-webhook-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入飞书Webhook URL" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="test-message" class="block text-sm font-medium text-gray-700 mb-1">测试消息</label>
+                        <textarea id="test-message" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="这是一条测试消息，用于验证飞书webhook连接是否正常。" required>这是一条测试消息，用于验证飞书webhook连接是否正常。</textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-test-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all-300">
+                            取消
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-info text-white rounded-lg hover:bg-info/90 transition-all-300">
+                            <i class="fa fa-paper-plane mr-1"></i> 发送测试消息
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入自定义JS -->
+    <script src="/static/js/app.js"></script>
+    
+    <!-- 实时时钟脚本 - 移到这里确保DOM加载完成后执行 -->
+    <script>
+            // 等待DOM完全加载
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM完全加载，尝试初始化时钟...');
+                
+                // 检查元素是否存在
+                const timeElement = document.getElementById('current-time');
+                const clockElement = document.getElementById('live-clock');
+                
+                if (timeElement && clockElement) {
+                    console.log('时钟元素已找到，可以开始更新时钟');
+                    
+                    // 确保元素可见
+                    clockElement.style.display = 'flex';
+                    clockElement.style.visibility = 'visible';
+                    
+                    // 更新时钟函数
+                    function updateClock() {
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                        const day = String(now.getDate()).padStart(2, '0');
+                        const hours = String(now.getHours()).padStart(2, '0');
+                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                        const seconds = String(now.getSeconds()).padStart(2, '0');
+                        
+                        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                        const weekday = weekdays[now.getDay()];
+                        
+                        const timeString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekday}`;
+                        timeElement.textContent = timeString;
+                    }
+                    
+                    // 立即更新一次
+                    updateClock();
+                    // 每秒更新一次
+                    setInterval(updateClock, 1000);
+                } else {
+                    console.error('未找到时钟元素！');
+                    console.log('current-time元素存在:', !!timeElement);
+                    console.log('live-clock元素存在:', !!clockElement);
+                }
+            });
+        </script>
+</body>
+</html>
