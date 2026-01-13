@@ -312,17 +312,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = document.getElementById('task-name').value;
         const type = document.getElementById('task-type').value;
         const webhookUrl = document.getElementById('webhook-url').value;
-        const hour = document.getElementById('task-hour').value;
-        const minute = document.getElementById('task-minute').value;
-        const second = document.getElementById('task-second').value;
         const enabled = document.getElementById('task-enabled').checked;
+        
+        // 只有在非GitLab任务类型时才获取时间值
+        let hour = '0';
+        let minute = '0';
+        let second = '0';
+        if (type !== 'gitlab') {
+            const hourInput = document.getElementById('task-hour');
+            const minuteInput = document.getElementById('task-minute');
+            const secondInput = document.getElementById('task-second');
+            
+            hour = hourInput ? hourInput.value : '0';
+            minute = minuteInput ? minuteInput.value : '0';
+            second = secondInput ? secondInput.value : '0';
+        }
         
         // 收集选中的星期几
         const daysOfWeekElements = document.querySelectorAll('input[name="days_of_week"]:checked');
         const daysOfWeek = Array.from(daysOfWeekElements).map(el => el.value).join(',');
         
-        // 构建cron表达式
-        const cronExpression = `${hour}:${minute}:${second}`;
+        // 构建cron表达式，对于GitLab任务，使用默认值
+        let cronExpression = `${hour}:${minute}:${second}`;
+        if (type === 'gitlab') {
+            // GitLab任务不需要精确的cron表达式，使用默认值
+            cronExpression = '0:0:0';
+        }
         
         // 根据任务类型获取额外数据并进行验证
         let content = '';

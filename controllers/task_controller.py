@@ -44,6 +44,27 @@ def register_task_routes(app):
             else:
                 task_data['ai_news_url'] = ''
             
+            # 添加GitLab相关字段
+            if len(task) > 14:
+                task_data['gitlab_url'] = task[14]
+            else:
+                task_data['gitlab_url'] = ''
+            
+            if len(task) > 15:
+                task_data['gitlab_token'] = task[15]
+            else:
+                task_data['gitlab_token'] = ''
+            
+            if len(task) > 16:
+                task_data['gitlab_events'] = task[16]
+            else:
+                task_data['gitlab_events'] = ''
+            
+            if len(task) > 17:
+                task_data['gitlab_project'] = task[17]
+            else:
+                task_data['gitlab_project'] = ''
+            
             task_list.append(task_data)
         
         return jsonify({'tasks': task_list})
@@ -86,6 +107,27 @@ def register_task_routes(app):
             task_data['ai_news_url'] = task[13]
         else:
             task_data['ai_news_url'] = ''
+        
+        # 添加GitLab相关字段
+        if len(task) > 14:
+            task_data['gitlab_url'] = task[14]
+        else:
+            task_data['gitlab_url'] = ''
+        
+        if len(task) > 15:
+            task_data['gitlab_token'] = task[15]
+        else:
+            task_data['gitlab_token'] = ''
+        
+        if len(task) > 16:
+            task_data['gitlab_events'] = task[16]
+        else:
+            task_data['gitlab_events'] = ''
+        
+        if len(task) > 17:
+            task_data['gitlab_project'] = task[17]
+        else:
+            task_data['gitlab_project'] = ''
         
         return jsonify({'success': True, 'task': task_data})
     
