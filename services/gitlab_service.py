@@ -2,14 +2,18 @@ import json
 import hmac
 import hashlib
 from datetime import datetime
+from utils.logger import logger
 
 def verify_gitlab_signature(token, request_body, signature_header):
     """验证GitLab Webhook签名"""
+    logger.info("验证GitLab Webhook签名")
     if not token or not signature_header:
+        logger.warning("签名验证失败: 缺少token或signature_header")
         return False
     
     # GitLab签名格式：'sha256=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     if not signature_header.startswith('sha256='):
+        logger.warning(f"签名验证失败: 无效的签名格式: {signature_header}")
         return False
     
     signature = signature_header.split('=')[1]
@@ -19,10 +23,16 @@ def verify_gitlab_signature(token, request_body, signature_header):
         hashlib.sha256
     ).hexdigest()
     
-    return hmac.compare_digest(expected_signature, signature)
+    result = hmac.compare_digest(expected_signature, signature)
+    if result:
+        logger.info("签名验证成功")
+    else:
+        logger.warning("签名验证失败: 签名不匹配")
+    return result
 
 def parse_gitlab_event(event_type, event_data):
     """解析GitLab事件数据"""
+    logger.info(f"解析GitLab事件: {event_type}")
     if event_type == 'Push Hook':
         return _parse_push_event(event_data)
     elif event_type == 'Merge Request Hook':
@@ -34,16 +44,20 @@ def parse_gitlab_event(event_type, event_data):
     elif event_type == 'Tag Push Hook':
         return _parse_tag_push_event(event_data)
     else:
+        logger.warning(f"未知GitLab事件类型: {event_type}")
         return f"未知GitLab事件类型: {event_type}", False
 
 def _parse_push_event(event_data):
     """解析Push事件"""
+    logger.info("解析GitLab Push事件")
     project_name = event_data.get('project', {}).get('name', '未知项目')
     user_name = event_data.get('user_name', '未知用户')
     ref = event_data.get('ref', '').split('/')[-1]  # 获取分支名
     commits = event_data.get('commits', [])
     commit_count = len(commits)
     compare_url = event_data.get('compare_url', '')
+    
+    logger.debug(f"Push事件详情: 项目={project_name}, 用户={user_name}, 分支={ref}, 提交数={commit_count}")
     
     # 生成提交信息
     commit_messages = []
@@ -71,6 +85,7 @@ def _parse_push_event(event_data):
 
 def _parse_merge_request_event(event_data):
     """解析Merge Request事件"""
+    logger.info("解析GitLab Merge Request事件")
     project_name = event_data.get('project', {}).get('name', '未知项目')
     user_name = event_data.get('user', {}).get('name', '未知用户')
     merge_request = event_data.get('object_attributes', {})
@@ -81,6 +96,8 @@ def _parse_merge_request_event(event_data):
     mr_target_branch = merge_request.get('target_branch', '未知目标分支')
     mr_url = merge_request.get('url', '')
     mr_action = merge_request.get('action', 'unknown')
+    
+    logger.debug(f"Merge Request事件详情: 项目={project_name}, 用户={user_name}, 标题={mr_title}, 操作={mr_action}")
     
     # 确定操作类型
     action_text = {}
@@ -122,6 +139,7 @@ def _parse_merge_request_event(event_data):
 
 def _parse_issue_event(event_data):
     """解析Issue事件"""
+    logger.info("解析GitLab Issue事件")
     project_name = event_data.get('project', {}).get('name', '未知项目')
     user_name = event_data.get('user', {}).get('name', '未知用户')
     issue = event_data.get('object_attributes', {})
@@ -131,6 +149,8 @@ def _parse_issue_event(event_data):
     issue_state = issue.get('state', 'unknown')
     issue_url = issue.get('url', '')
     issue_action = issue.get('action', 'unknown')
+    
+    logger.debug(f"Issue事件详情: 项目={project_name}, 用户={user_name}, 标题={issue_title}, 操作={issue_action}")
     
     # 确定操作类型
     action_text = {}
@@ -168,6 +188,7 @@ def _parse_issue_event(event_data):
 
 def _parse_pipeline_event(event_data):
     """解析Pipeline事件"""
+    logger.info("解析GitLab Pipeline事件")
     project_name = event_data.get('project', {}).get('name', '未知项目')
     user_name = event_data.get('user', {}).get('name', '未知用户')
     pipeline = event_data.get('object_attributes', {})
@@ -176,6 +197,8 @@ def _parse_pipeline_event(event_data):
     pipeline_status = pipeline.get('status', 'unknown')
     pipeline_ref = pipeline.get('ref', 'unknown')
     pipeline_url = pipeline.get('url', '')
+    
+    logger.debug(f"Pipeline事件详情: 项目={project_name}, 用户={user_name}, ID={pipeline_id}, 状态={pipeline_status}")
     
     # 确定状态文本和emoji
     status_info = {
@@ -203,10 +226,13 @@ def _parse_pipeline_event(event_data):
 
 def _parse_tag_push_event(event_data):
     """解析Tag Push事件"""
+    logger.info("解析GitLab Tag Push事件")
     project_name = event_data.get('project', {}).get('name', '未知项目')
     user_name = event_data.get('user_name', '未知用户')
     ref = event_data.get('ref', '').split('/')[-1]  # 获取标签名
     compare_url = event_data.get('compare_url', '')
+    
+    logger.debug(f"Tag Push事件详情: 项目={project_name}, 用户={user_name}, 标签={ref}")
     
     # 生成飞书消息
     message = f"🏷️ **GitLab Tag Push事件**\n"

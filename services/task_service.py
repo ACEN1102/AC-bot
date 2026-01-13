@@ -3,6 +3,7 @@ from models.db import execute_query
 from services.feishu_service import send_feishu_message
 from services.ai_service import get_ai_news, call_llm
 from datetime import datetime
+from utils.logger import logger
 
 def get_all_tasks():
     """获取所有任务"""
@@ -10,25 +11,34 @@ def get_all_tasks():
 
 def get_task_by_id(task_id):
     """根据ID获取任务"""
+    logger.info(f"根据ID {task_id} 获取任务")
     return execute_query("SELECT * FROM tasks WHERE id = ?", (task_id,), fetch_one=True)
 
 def create_task(task_data):
     """创建任务"""
+    logger.info(f"创建新任务: {task_data['name']}")
     conn = sqlite3.connect('feishu_bot.db')
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO tasks (name, type, webhook_url, cron_expression, enabled, content, api_url, api_key, days_of_week, model_name, ai_news_url, gitlab_url, gitlab_token, gitlab_events, gitlab_project) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (task_data['name'], task_data['type'], task_data['webhook_url'], task_data['cron_expression'], 
-         1 if task_data.get('enabled', True) else 0, task_data.get('content'), 
-         task_data.get('api_url'), task_data.get('api_key'), task_data.get('days_of_week', ''),
-         task_data.get('model_name'), task_data.get('ai_news_url'),
-         task_data.get('gitlab_url'), task_data.get('gitlab_token'), task_data.get('gitlab_events', ''),
-         task_data.get('gitlab_project'))
-    )
-    task_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    return task_id
+    try:
+        cursor.execute(
+            "INSERT INTO tasks (name, type, webhook_url, cron_expression, enabled, content, api_url, api_key, days_of_week, model_name, ai_news_url, gitlab_url, gitlab_token, gitlab_events, gitlab_project) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (task_data['name'], task_data['type'], task_data['webhook_url'], task_data['cron_expression'], 
+             1 if task_data.get('enabled', True) else 0, task_data.get('content'), 
+             task_data.get('api_url'), task_data.get('api_key'), task_data.get('days_of_week', ''),
+             task_data.get('model_name'), task_data.get('ai_news_url'),
+             task_data.get('gitlab_url'), task_data.get('gitlab_token'), task_data.get('gitlab_events', ''),
+             task_data.get('gitlab_project'))
+        )
+        task_id = cursor.lastrowid
+        conn.commit()
+        logger.info(f"成功创建任务，ID: {task_id}")
+        return task_id
+    except Exception as e:
+        logger.error(f"创建任务失败: {str(e)}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def update_task(task_id, task_data):
     """更新任务"""
@@ -54,7 +64,7 @@ def update_task(task_id, task_data):
 
 def delete_task(task_id):
     """删除任务"""
-    execute_query("DELETE FROM tasks WHERE id = ?", (task_id,), commit=True)
+    execute_query("DELETE FROM ta sks WHERE id = ?", (task_id,), commit=True)
 
 def execute_task(task_id):
     """执行任务"""

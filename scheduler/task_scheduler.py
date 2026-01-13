@@ -2,6 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from models.db import execute_query
 from services.task_service import execute_task
+from utils.logger import logger
 
 # 初始化调度器
 scheduler = BackgroundScheduler()
@@ -9,12 +10,14 @@ scheduler.start()
 
 def update_scheduler():
     """更新调度器任务"""
+    logger.info("开始更新调度器任务")
     # 移除所有任务
     for job in scheduler.get_jobs():
         scheduler.remove_job(job.id)
     
     # 添加所有启用的任务
     tasks = execute_query("SELECT id, cron_expression, days_of_week FROM tasks WHERE enabled = 1")
+    logger.info(f"共获取到 {len(tasks)} 个启用的任务")
     
     for task_info in tasks:
         try:
@@ -25,7 +28,7 @@ def update_scheduler():
             # 解析cron表达式（格式：HH:MM:SS）
             parts = cron_expression.split(':')
             if len(parts) != 3:
-                print(f"无效的cron表达式: {cron_expression}")
+                logger.error(f"无效的cron表达式: {cron_expression}")
                 continue
             
             hour = int(parts[0])
@@ -65,5 +68,7 @@ def update_scheduler():
                 id=f"task_{task_id}",
                 misfire_grace_time=300  # 允许5分钟的执行延迟
             )
+            logger.info(f"成功添加任务 {task_id} 到调度器")
         except Exception as e:
-            print(f"添加任务 {task_id} 到调度器失败: {str(e)}")
+            logger.error(f"添加任务 {task_id} 到调度器失败: {str(e)}")
+    logger.info("调度器任务更新完成")

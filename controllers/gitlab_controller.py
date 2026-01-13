@@ -3,6 +3,7 @@ from services.gitlab_service import verify_gitlab_signature, parse_gitlab_event
 from services.feishu_service import send_feishu_message
 from models.db import execute_query
 from datetime import datetime
+from utils.logger import logger
 
 def register_gitlab_routes(app):
     """注册GitLab相关路由"""
@@ -10,9 +11,12 @@ def register_gitlab_routes(app):
     @app.route('/api/gitlab/webhook', methods=['POST'])
     def gitlab_webhook():
         """处理GitLab Webhook请求"""
+        logger.info("接收到GitLab Webhook请求")
         # 获取请求头中的事件类型和签名
         event_type = request.headers.get('X-Gitlab-Event', '')
         signature_header = request.headers.get('X-Gitlab-Token', '') or request.headers.get('X-Hub-Signature-256', '')
+        
+        logger.info(f"GitLab事件类型: {event_type}")
         
         # 获取请求体
         request_body = request.get_data()
@@ -20,14 +24,18 @@ def register_gitlab_routes(app):
         # 尝试解析请求体
         try:
             event_data = request.get_json()
+            logger.debug(f"GitLab事件数据: {event_data}")
         except Exception as e:
+            logger.error(f"解析请求体失败: {str(e)}")
             return jsonify({'success': False, 'message': f'解析请求体失败: {str(e)}'}), 400
         
         # 获取项目路径，用于匹配任务
         project_path = event_data.get('project', {}).get('path_with_namespace', '')
+        logger.info(f"GitLab项目路径: {project_path}")
         
         # 查询所有启用的GitLab任务
         tasks = execute_query("SELECT id, name, type, webhook_url, enabled, gitlab_token, gitlab_events, gitlab_project, days_of_week FROM tasks WHERE type = 'gitlab' AND enabled = 1")
+        logger.info(f"找到 {len(tasks)} 个启用的GitLab任务")
         
         # 遍历所有匹配的任务
         for task in tasks:

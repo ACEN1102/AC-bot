@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+from utils.logger import logger
 
 DATABASE_NAME = 'feishu_bot.db'
 
@@ -12,6 +13,7 @@ def get_db_connection():
 
 def init_db():
     """初始化数据库"""
+    logger.info("初始化数据库")
     conn = get_db_connection()
     cursor = conn.cursor()
     # 创建任务表
@@ -50,9 +52,11 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
+    logger.info("数据库初始化完成")
 
 def execute_query(query, params=(), fetch_one=False, commit=False):
     """执行SQL查询"""
+    logger.debug(f"执行SQL查询: {query[:50]}...  参数: {params}")
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(query, params)
@@ -60,11 +64,14 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     result = None
     if fetch_one:
         result = cursor.fetchone()
+        logger.debug(f"查询结果(单行): {result}")
     else:
         result = cursor.fetchall()
+        logger.debug(f"查询结果(多行): {len(result)} 行")
     
     if commit:
         conn.commit()
+        logger.debug("事务已提交")
     
     conn.close()
     return result

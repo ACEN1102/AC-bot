@@ -2,6 +2,7 @@ from flask import request, jsonify
 from services.task_service import get_all_tasks, get_task_by_id, create_task, update_task, delete_task, execute_task
 from scheduler.task_scheduler import update_scheduler
 import threading
+from utils.logger import logger
 
 def register_task_routes(app):
     """注册任务相关路由"""
@@ -67,14 +68,17 @@ def register_task_routes(app):
             
             task_list.append(task_data)
         
+        logger.debug(f"返回 {len(task_list)} 个任务")
         return jsonify({'tasks': task_list})
     
     @app.route('/api/tasks/<int:task_id>', methods=['GET'])
     def get_task(task_id):
         """根据ID获取任务"""
+        logger.info(f"根据ID {task_id} 获取任务")
         task = get_task_by_id(task_id)
         
         if not task:
+            logger.warning(f"任务ID {task_id} 不存在")
             return jsonify({'success': False, 'message': '任务不存在'}), 404
         
         task_data = {
@@ -129,52 +133,63 @@ def register_task_routes(app):
         else:
             task_data['gitlab_project'] = ''
         
+        logger.debug(f"返回任务详情: {task_data['name']}")
         return jsonify({'success': True, 'task': task_data})
     
     @app.route('/api/tasks', methods=['POST'])
     def add_task():
         """添加任务"""
         data = request.json
+        logger.info(f"添加新任务: {data.get('name')}")
         
         task_id = create_task(data)
         
         # 更新调度器
         update_scheduler()
         
+        logger.info(f"任务添加成功，ID: {task_id}")
         return jsonify({'success': True, 'task_id': task_id})
     
     @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
     def update_task_route(task_id):
         """更新任务"""
         data = request.json
+        logger.info(f"更新任务ID {task_id}")
         
         update_task(task_id, data)
         
         # 更新调度器
         update_scheduler()
         
+        logger.info(f"任务ID {task_id} 更新成功")
         return jsonify({'success': True})
     
     @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
     def delete_task_route(task_id):
         """删除任务"""
+        logger.info(f"删除任务ID {task_id}")
+        
         delete_task(task_id)
         
         # 更新调度器
         update_scheduler()
         
+        logger.info(f"任务ID {task_id} 删除成功")
         return jsonify({'success': True})
     
     @app.route('/api/tasks/<int:task_id>/execute', methods=['POST'])
     def manual_execute_task(task_id):
         """手动执行任务"""
+        logger.info(f"手动执行任务ID {task_id}")
         # 在线程中执行任务，避免阻塞
         threading.Thread(target=execute_task, args=(task_id,)).start()
+        logger.info(f"任务ID {task_id} 开始执行")
         return jsonify({'success': True, 'message': '任务已开始执行'})
     
     @app.route('/api/task_stats', methods=['GET'])
     def get_task_stats():
         """获取任务统计信息"""
+        logger.info("获取任务统计信息")
         try:
             from models.db import execute_query
             from datetime import datetime, timedelta
@@ -245,6 +260,7 @@ def register_task_routes(app):
                 if next_run_times:
                     next_run = min(next_run_times).isoformat()
             
+            logger.debug(f"任务统计: 总任务数 {total_tasks}, 活跃任务数 {active_tasks}, 下次执行时间 {next_run}")
             return jsonify({
                 'success': True,
                 'task_stats': {
@@ -254,6 +270,7 @@ def register_task_routes(app):
                 }
             })
         except Exception as e:
+            logger.error(f"获取任务统计失败: {str(e)}")
             return jsonify({
                 'success': False,
                 'message': f'获取任务统计失败: {str(e)}'
