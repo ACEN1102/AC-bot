@@ -721,15 +721,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
-    // 点击模态框外部关闭模态框
-    window.addEventListener('click', function(event) {
-        if (event.target === taskModal) {
-            closeTaskModal();
-        }
-        if (event.target === testConnectionModal) {
-            closeTestConnectionModal();
-        }
-    });
 
     // 清空日志
     clearLogsBtn.addEventListener('click', function() {
