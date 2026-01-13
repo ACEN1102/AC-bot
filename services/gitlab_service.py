@@ -5,17 +5,27 @@ from datetime import datetime
 from utils.logger import logger
 
 def verify_gitlab_signature(token, request_body, signature_header):
-    """验证GitLab Webhook签名"""
+    """验证GitLab Webhook签名，支持两种格式：
+    1. 简单token验证（GitLab使用 X-Gitlab-Token）
+    2. HMAC签名验证（GitHub使用 X-Hub-Signature-256）
+    """
     logger.info("验证GitLab Webhook签名")
-    if not token or not signature_header:
-        logger.warning("签名验证失败: 缺少token或signature_header")
-        return False
+    # if not token or not signature_header:
+    #     logger.warning("签名验证失败: 缺少token或signature_header")
+    #     return False
     
-    # GitLab签名格式：'sha256=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    # 1. 简单token验证（GitLab使用）
     if not signature_header.startswith('sha256='):
-        logger.warning(f"签名验证失败: 无效的签名格式: {signature_header}")
-        return False
+        logger.debug(f"使用简单token验证: {signature_header[:10]}...")
+        result = token == signature_header
+        if result:
+            logger.info("简单token验证成功")
+        else:
+            logger.warning("简单token验证失败: token不匹配")
+        return result
     
+    # 2. HMAC签名验证（GitHub使用）
+    logger.debug("使用HMAC签名验证")
     signature = signature_header.split('=')[1]
     expected_signature = hmac.new(
         token.encode('utf-8'),
@@ -25,9 +35,9 @@ def verify_gitlab_signature(token, request_body, signature_header):
     
     result = hmac.compare_digest(expected_signature, signature)
     if result:
-        logger.info("签名验证成功")
+        logger.info("HMAC签名验证成功")
     else:
-        logger.warning("签名验证失败: 签名不匹配")
+        logger.warning("HMAC签名验证失败: 签名不匹配")
     return result
 
 def parse_gitlab_event(event_type, event_data):
@@ -55,16 +65,19 @@ def _parse_push_event(event_data):
     ref = event_data.get('ref', '').split('/')[-1]  # 获取分支名
     commits = event_data.get('commits', [])
     commit_count = len(commits)
-    compare_url = event_data.get('compare_url', '')
     
     logger.debug(f"Push事件详情: 项目={project_name}, 用户={user_name}, 分支={ref}, 提交数={commit_count}")
     
-    # 生成提交信息
+    # 生成提交信息，包含每个提交的链接
     commit_messages = []
     for commit in commits[:5]:  # 只显示最近5个提交
         commit_message = commit.get('message', '').split('\n')[0]  # 只显示第一行
         commit_author = commit.get('author', {}).get('name', '未知作者')
-        commit_messages.append(f"  • {commit_author}: {commit_message}")
+        commit_url = commit.get('url', '')
+        # 格式化提交信息，包含提交链接
+        commit_messages.append(f"  • [{commit_author}]: {commit_message}")
+        if commit_url:
+            commit_messages.append(f"    🔗 {commit_url}")
     
     if commit_count > 5:
         commit_messages.append(f"  • ... 还有 {commit_count - 5} 个提交")
@@ -78,7 +91,6 @@ def _parse_push_event(event_data):
     message += f"🌿 分支: {ref}\n"
     message += f"📝 提交: {commit_count} 个新提交\n"
     message += f"📋 提交详情:\n{commit_text}\n"
-    message += f"🔗 对比链接: {compare_url}\n"
     message += f"⏰ 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
     
     return message, True
