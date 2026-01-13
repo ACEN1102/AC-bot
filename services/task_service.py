@@ -17,11 +17,13 @@ def create_task(task_data):
     conn = sqlite3.connect('feishu_bot.db')
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO tasks (name, type, webhook_url, cron_expression, enabled, content, api_url, api_key, days_of_week, model_name, ai_news_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tasks (name, type, webhook_url, cron_expression, enabled, content, api_url, api_key, days_of_week, model_name, ai_news_url, gitlab_url, gitlab_token, gitlab_events, gitlab_project) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (task_data['name'], task_data['type'], task_data['webhook_url'], task_data['cron_expression'], 
          1 if task_data.get('enabled', True) else 0, task_data.get('content'), 
          task_data.get('api_url'), task_data.get('api_key'), task_data.get('days_of_week', ''),
-         task_data.get('model_name'), task_data.get('ai_news_url'))
+         task_data.get('model_name'), task_data.get('ai_news_url'),
+         task_data.get('gitlab_url'), task_data.get('gitlab_token'), task_data.get('gitlab_events', ''),
+         task_data.get('gitlab_project'))
     )
     task_id = cursor.lastrowid
     conn.commit()
@@ -40,11 +42,13 @@ def update_task(task_id, task_data):
     else:
         # 完整更新所有字段
         execute_query(
-            "UPDATE tasks SET name = ?, type = ?, webhook_url = ?, cron_expression = ?, enabled = ?, content = ?, api_url = ?, api_key = ?, days_of_week = ?, model_name = ?, ai_news_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            "UPDATE tasks SET name = ?, type = ?, webhook_url = ?, cron_expression = ?, enabled = ?, content = ?, api_url = ?, api_key = ?, days_of_week = ?, model_name = ?, ai_news_url = ?, gitlab_url = ?, gitlab_token = ?, gitlab_events = ?, gitlab_project = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
             (task_data['name'], task_data['type'], task_data['webhook_url'], task_data['cron_expression'], 
              1 if task_data.get('enabled', True) else 0, task_data.get('content'), 
              task_data.get('api_url'), task_data.get('api_key'), task_data.get('days_of_week', ''),
-             task_data.get('model_name'), task_data.get('ai_news_url'), task_id),
+             task_data.get('model_name'), task_data.get('ai_news_url'),
+             task_data.get('gitlab_url'), task_data.get('gitlab_token'), task_data.get('gitlab_events', ''),
+             task_data.get('gitlab_project'), task_id),
             commit=True
         )
 
@@ -61,10 +65,10 @@ def execute_task(task_id):
     
     # 确保task元组有足够的元素
     task_data = list(task)
-    while len(task_data) < 14:  # 确保至少有14个元素（包含新增的model_name和ai_news_url）
+    while len(task_data) < 18:  # 确保至少有18个元素（包含新增的GitLab相关字段）
         task_data.append(None)
     
-    task_id, name, type, webhook_url, cron_expression, enabled, created_at, updated_at, content, api_url, api_key, days_of_week, model_name, ai_news_url = task_data
+    task_id, name, type, webhook_url, cron_expression, enabled, created_at, updated_at, content, api_url, api_key, days_of_week, model_name, ai_news_url, gitlab_url, gitlab_token, gitlab_events, gitlab_project = task_data
     
     try:
         # 检查是否是指定的星期几
@@ -89,6 +93,9 @@ def execute_task(task_id):
         elif type == 'llm':
             # 如果有自定义的模型名称，则使用它，否则使用默认值
             success, message = call_llm(api_url, api_key, content, model_name)
+        elif type == 'gitlab':
+            # GitLab任务类型不需要在这里执行，它是由Webhook触发的
+            success, message = True, "GitLab任务是由Webhook触发的，不需要定时执行"
         else:
             success, message = False, f"未知任务类型: {type}"
         

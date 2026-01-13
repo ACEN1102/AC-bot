@@ -30,7 +30,11 @@ def init_db():
         api_key TEXT,
         days_of_week TEXT,
         model_name TEXT,
-        ai_news_url TEXT
+        ai_news_url TEXT,
+        gitlab_url TEXT,
+        gitlab_token TEXT,
+        gitlab_events TEXT,
+        gitlab_project TEXT
     )
     ''')
     # 创建日志表

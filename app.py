@@ -3,6 +3,7 @@ from models.db import init_db
 from controllers.task_controller import register_task_routes
 from controllers.log_controller import register_log_routes
 from controllers.test_controller import register_test_routes
+from controllers.gitlab_controller import register_gitlab_routes
 from scheduler.task_scheduler import update_scheduler
 
 # 初始化Flask应用
@@ -13,6 +14,7 @@ app.config['SECRET_KEY'] = 'feishu_bot_secret_key'
 register_task_routes(app)
 register_log_routes(app)
 register_test_routes(app)
+register_gitlab_routes(app)
 
 # 主页路由
 @app.route('/')

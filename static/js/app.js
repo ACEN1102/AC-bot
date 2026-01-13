@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskType = document.getElementById('task-type');
     const customContentSection = document.getElementById('custom-content-section');
     const llmConfigSection = document.getElementById('llm-config-section');
+    const gitlabConfigSection = document.getElementById('gitlab-config-section');
     const testConnectionBtn = document.getElementById('test-connection-btn');
     const testConnectionModal = document.getElementById('test-connection-modal');
     const closeTestModalBtn = document.getElementById('close-test-modal-btn');
@@ -22,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const enabledTasksCard = document.getElementById('enabled-tasks-card');
     const recentStatusText = document.getElementById('recent-status-text');
     const recentStatusTime = document.getElementById('recent-status-time');
+    const taskHour = document.getElementById('task-hour');
+    const taskMinute = document.getElementById('task-minute');
+    const taskSecond = document.getElementById('task-second');
+    // 获取时间输入框所在的section，使用更可靠的方法
+    const timeSection = taskHour ? taskHour.closest('.mb-4') : null;
 
     // 初始化
     loadTasks();
@@ -59,6 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             case 'llm':
                                 typeDisplay = '大模型内容';
                                 typeClass = 'task-type-llm';
+                                break;
+                            case 'gitlab':
+                                typeDisplay = 'GitLab事件';
+                                typeClass = 'task-type-gitlab';
                                 break;
                             default:
                                 typeDisplay = '未知类型';
@@ -259,21 +269,40 @@ document.addEventListener('DOMContentLoaded', function() {
         if (type === 'custom') {
             customContentSection.classList.remove('hidden');
             llmConfigSection.classList.add('hidden');
+            gitlabConfigSection.classList.add('hidden');
             if (aiNewsSection) aiNewsSection.classList.add('hidden');
+            // 显示时间输入框
+            if (timeSection) timeSection.classList.remove('hidden');
         } else if (type === 'llm') {
             customContentSection.classList.add('hidden');
             llmConfigSection.classList.remove('hidden');
+            gitlabConfigSection.classList.add('hidden');
             if (aiNewsSection) aiNewsSection.classList.add('hidden');
+            // 显示时间输入框
+            if (timeSection) timeSection.classList.remove('hidden');
         } else if (type === 'ai_news' && aiNewsSection) {
             customContentSection.classList.add('hidden');
             llmConfigSection.classList.add('hidden');
+            gitlabConfigSection.classList.add('hidden');
             aiNewsSection.classList.remove('hidden');
-    } else {
-        customContentSection.classList.add('hidden');
-        llmConfigSection.classList.add('hidden');
-        if (aiNewsSection) aiNewsSection.classList.add('hidden');
+            // 显示时间输入框
+            if (timeSection) timeSection.classList.remove('hidden');
+        } else if (type === 'gitlab') {
+            customContentSection.classList.add('hidden');
+            llmConfigSection.classList.add('hidden');
+            gitlabConfigSection.classList.remove('hidden');
+            if (aiNewsSection) aiNewsSection.classList.add('hidden');
+            // 隐藏时间输入框，GitLab任务不需要定时执行
+            if (timeSection) timeSection.classList.add('hidden');
+        } else {
+            customContentSection.classList.add('hidden');
+            llmConfigSection.classList.add('hidden');
+            gitlabConfigSection.classList.add('hidden');
+            if (aiNewsSection) aiNewsSection.classList.add('hidden');
+            // 显示时间输入框
+            if (timeSection) timeSection.classList.remove('hidden');
+        }
     }
-}
 
     // 提交任务表单
     taskForm.addEventListener('submit', function(e) {
@@ -300,6 +329,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let apiUrl = '';
         let apiKey = '';
         let aiNewsUrl = '';
+        let gitlabUrl = '';
+        let gitlabToken = '';
+        let gitlabProject = '';
+        let gitlabEvents = '';
         
         // 表单验证
         if (type === 'custom') {
@@ -331,6 +364,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('请输入60sAPI URL', 'error');
                 return;
             }
+        } else if (type === 'gitlab') {
+            gitlabUrl = document.getElementById('gitlab-url').value;
+            gitlabProject = document.getElementById('gitlab-project').value;
+            gitlabToken = document.getElementById('gitlab-token').value;
+            
+            // 收集选中的事件类型
+            const gitlabEventsElements = document.querySelectorAll('input[name="gitlab_events"]:checked');
+            gitlabEvents = Array.from(gitlabEventsElements).map(el => el.value).join(',');
+            
+            if (!gitlabProject.trim()) {
+                showToast('请输入GitLab项目路径', 'error');
+                return;
+            }
+            if (!gitlabEvents) {
+                showToast('请至少选择一种事件类型', 'error');
+                return;
+            }
         }
         
         // 构建请求数据
@@ -338,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
             name,
             type,
             webhook_url: webhookUrl,
-            cron_expression: cronExpression,
+            cron_expression: cronExpression, // 对于GitLab任务，这个值不会被使用
             enabled,
             days_of_week: daysOfWeek
         };
@@ -347,6 +397,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (apiUrl) taskData.api_url = apiUrl;
         if (apiKey) taskData.api_key = apiKey;
         if (aiNewsUrl) taskData.ai_news_url = aiNewsUrl;
+        if (gitlabUrl) taskData.gitlab_url = gitlabUrl;
+        if (gitlabToken) taskData.gitlab_token = gitlabToken;
+        if (gitlabProject) taskData.gitlab_project = gitlabProject;
+        if (gitlabEvents) taskData.gitlab_events = gitlabEvents;
         
         // 添加新的配置字段
         const modelNameInput = document.getElementById('llm-model-name');
@@ -510,6 +564,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (aiNewsUrlInput) {
                                 aiNewsUrlInput.value = task.ai_news_url;
                             }
+                        }
+                    } else if (task.type === 'gitlab') {
+                        document.getElementById('gitlab-url').value = task.gitlab_url || '';
+                        document.getElementById('gitlab-project').value = task.gitlab_project || '';
+                        document.getElementById('gitlab-token').value = task.gitlab_token || '';
+                        
+                        // 选中事件类型
+                        const gitlabEventsElements = document.querySelectorAll('input[name="gitlab_events"]');
+                        gitlabEventsElements.forEach(el => el.checked = false);
+                        
+                        if (task.gitlab_events) {
+                            const events = task.gitlab_events.split(',');
+                            events.forEach(event => {
+                                const element = document.querySelector(`input[name="gitlab_events"][value="${event}"]`);
+                                if (element) element.checked = true;
+                            });
                         }
                     }
                     
