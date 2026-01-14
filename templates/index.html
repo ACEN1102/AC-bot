@@ -243,6 +243,8 @@
                             <option value="custom">自定义消息</option>
                             <option value="ai_news">AI新闻</option>
                             <option value="llm">大模型内容</option>
+                            <option value="gitlab">GitLab事件</option>
+                            <option value="github">GitHub事件</option>
                         </select>
                     </div>
                     
@@ -257,11 +259,11 @@
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">执行时间 <span class="text-danger">*</span></label>
                         <div class="flex items-center space-x-2">
-                            <input type="number" id="task-hour" name="hour" min="0" max="23" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="时" required>
+                            <input type="number" id="task-hour" name="hour" min="0" max="23" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="时">
                             <span class="text-gray-500">:</span>
-                            <input type="number" id="task-minute" name="minute" min="0" max="59" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="分" required>
+                            <input type="number" id="task-minute" name="minute" min="0" max="59" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="分">
                             <span class="text-gray-500">:</span>
-                            <input type="number" id="task-second" name="second" min="0" max="59" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="秒" required>
+                            <input type="number" id="task-second" name="second" min="0" max="59" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-center" placeholder="秒">
                         </div>
                         <p class="text-xs text-gray-500 mt-1">请设置任务执行的具体时间（24小时制）</p>
                     </div>
@@ -334,6 +336,96 @@
                             <label for="llm-api-key" class="block text-sm font-medium text-gray-700 mb-1">API Key <span class="text-danger">*</span></label>
                             <input type="password" id="llm-api-key" name="llm_api_key" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入API密钥"></input>
                             <p class="text-xs text-gray-500 mt-1">请确保API密钥安全，系统不会明文存储</p>
+                        </div>
+                    </div>
+
+                    <!-- GitLab配置（根据任务类型显示/隐藏） -->
+                    <div id="gitlab-config-section" class="mb-4 hidden">
+                        <div class="mb-3">
+                            <label for="gitlab-url" class="block text-sm font-medium text-gray-700 mb-1">GitLab服务器地址</label>
+                            <input type="url" id="gitlab-url" name="gitlab_url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：https://gitlab.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="gitlab-project" class="block text-sm font-medium text-gray-700 mb-1">GitLab项目路径 <span class="text-danger">*</span></label>
+                            <input type="text" id="gitlab-project" name="gitlab_project" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：group/project_name">
+                            <p class="text-xs text-gray-500 mt-1">项目完整路径，如：group/project_name</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gitlab-token" class="block text-sm font-medium text-gray-700 mb-1">GitLab Webhook密钥</label>
+                            <input type="password" id="gitlab-token" name="gitlab_token" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入GitLab Webhook密钥">
+                            <p class="text-xs text-gray-500 mt-1">用于验证GitLab Webhook请求的签名</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">事件类型 <span class="text-danger">*</span></label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="gitlab_events" value="Push Hook" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Push事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="gitlab_events" value="Merge Request Hook" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Merge Request</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="gitlab_events" value="Issue Hook" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Issue事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="gitlab_events" value="Pipeline Hook" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Pipeline事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="gitlab_events" value="Tag Push Hook" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Tag Push事件</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GitHub配置（根据任务类型显示/隐藏） -->
+                    <div id="github-config-section" class="mb-4 hidden">
+                        <div class="mb-3">
+                            <label for="github-url" class="block text-sm font-medium text-gray-700 mb-1">GitHub服务器地址</label>
+                            <input type="url" id="github-url" name="github_url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：https://github.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="github-project" class="block text-sm font-medium text-gray-700 mb-1">GitHub项目路径 <span class="text-danger">*</span></label>
+                            <input type="text" id="github-project" name="github_project" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="如：owner/repo">
+                            <p class="text-xs text-gray-500 mt-1">项目完整路径，如：owner/repo</p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="github-token" class="block text-sm font-medium text-gray-700 mb-1">GitHub Webhook密钥</label>
+                            <input type="password" id="github-token" name="github_token" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入GitHub Webhook密钥">
+                            <p class="text-xs text-gray-500 mt-1">用于验证GitHub Webhook请求的签名</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">事件类型 <span class="text-danger">*</span></label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="github_events" value="push" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Push事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="github_events" value="pull_request" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Pull Request</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="github_events" value="issues" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Issues事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="github_events" value="release" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Release事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="github_events" value="star" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Star事件</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="github_events" value="fork" class="form-checkbox h-5 w-5 text-primary rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Fork事件</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     

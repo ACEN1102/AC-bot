@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+from utils.logger import logger
 
 DATABASE_NAME = 'feishu_bot.db'
 
@@ -12,6 +13,7 @@ def get_db_connection():
 
 def init_db():
     """初始化数据库"""
+    logger.info("***正在初始化AC-bot数据库...")
     conn = get_db_connection()
     cursor = conn.cursor()
     # 创建任务表
@@ -30,9 +32,43 @@ def init_db():
         api_key TEXT,
         days_of_week TEXT,
         model_name TEXT,
-        ai_news_url TEXT
+        ai_news_url TEXT,
+        gitlab_url TEXT,
+        gitlab_token TEXT,
+        gitlab_events TEXT,
+        gitlab_project TEXT,
+        github_url TEXT,
+        github_token TEXT,
+        github_events TEXT,
+        github_project TEXT
     )
     ''')
+    
+    # 为现有表添加GitHub相关字段（如果不存在）
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_url TEXT")
+        logger.info("添加github_url字段成功")
+    except Exception as e:
+        logger.debug(f"github_url字段已存在或添加失败: {str(e)}")
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_token TEXT")
+        logger.info("添加github_token字段成功")
+    except Exception as e:
+        logger.debug(f"github_token字段已存在或添加失败: {str(e)}")
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_events TEXT")
+        logger.info("添加github_events字段成功")
+    except Exception as e:
+        logger.debug(f"github_events字段已存在或添加失败: {str(e)}")
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_project TEXT")
+        logger.info("添加github_project字段成功")
+    except Exception as e:
+        logger.debug(f"github_project字段已存在或添加失败: {str(e)}")
+    
     # 创建日志表
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS logs (
@@ -46,9 +82,11 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
+    logger.info("***数据库初始化完成!")
 
 def execute_query(query, params=(), fetch_one=False, commit=False):
     """执行SQL查询"""
+    logger.debug(f"执行SQL查询: {query[:50]}...  参数: {params}")
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(query, params)
@@ -56,11 +94,14 @@ def execute_query(query, params=(), fetch_one=False, commit=False):
     result = None
     if fetch_one:
         result = cursor.fetchone()
+        logger.debug(f"查询结果(单行): {result}")
     else:
         result = cursor.fetchall()
+        logger.debug(f"查询结果(多行): {len(result)} 行")
     
     if commit:
         conn.commit()
+        logger.debug("事务已提交")
     
     conn.close()
     return result
