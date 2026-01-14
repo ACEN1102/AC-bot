@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskHour = document.getElementById('task-hour');
     const taskMinute = document.getElementById('task-minute');
     const taskSecond = document.getElementById('task-second');
+    // 获取时间输入框所在的section，使用更可靠的方法
+    const timeSection = taskHour ? taskHour.closest('.mb-4') : null;
     // 初始化
     loadTasks();
     loadLogs();
