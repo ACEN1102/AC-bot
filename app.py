@@ -5,6 +5,7 @@ from controllers.task_controller import register_task_routes
 from controllers.log_controller import register_log_routes
 from controllers.test_controller import register_test_routes
 from controllers.gitlab_controller import register_gitlab_routes
+from controllers.github_controller import register_github_routes
 from scheduler.task_scheduler import update_scheduler
 
 from utils.init import log_init, start_init
@@ -16,6 +17,7 @@ register_task_routes(app)
 register_log_routes(app)
 register_test_routes(app)
 register_gitlab_routes(app)
+register_github_routes(app)
 
 # 主页路由
 @app.route('/')

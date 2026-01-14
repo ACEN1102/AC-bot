@@ -36,9 +36,39 @@ def init_db():
         gitlab_url TEXT,
         gitlab_token TEXT,
         gitlab_events TEXT,
-        gitlab_project TEXT
+        gitlab_project TEXT,
+        github_url TEXT,
+        github_token TEXT,
+        github_events TEXT,
+        github_project TEXT
     )
     ''')
+    
+    # 为现有表添加GitHub相关字段（如果不存在）
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_url TEXT")
+        logger.info("添加github_url字段成功")
+    except Exception as e:
+        logger.debug(f"github_url字段已存在或添加失败: {str(e)}")
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_token TEXT")
+        logger.info("添加github_token字段成功")
+    except Exception as e:
+        logger.debug(f"github_token字段已存在或添加失败: {str(e)}")
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_events TEXT")
+        logger.info("添加github_events字段成功")
+    except Exception as e:
+        logger.debug(f"github_events字段已存在或添加失败: {str(e)}")
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN github_project TEXT")
+        logger.info("添加github_project字段成功")
+    except Exception as e:
+        logger.debug(f"github_project字段已存在或添加失败: {str(e)}")
+    
     # 创建日志表
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS logs (

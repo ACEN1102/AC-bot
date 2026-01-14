@@ -66,6 +66,30 @@ def register_task_routes(app):
             else:
                 task_data['gitlab_project'] = ''
             
+            # 如果有第18个元素（github_url），则添加到task_data中
+            if len(task) > 18:
+                task_data['github_url'] = task[18]
+            else:
+                task_data['github_url'] = ''
+            
+            # 如果有第19个元素（github_token），则添加到task_data中
+            if len(task) > 19:
+                task_data['github_token'] = task[19]
+            else:
+                task_data['github_token'] = ''
+            
+            # 如果有第20个元素（github_events），则添加到task_data中
+            if len(task) > 20:
+                task_data['github_events'] = task[20]
+            else:
+                task_data['github_events'] = ''
+            
+            # 如果有第21个元素（github_project），则添加到task_data中
+            if len(task) > 21:
+                task_data['github_project'] = task[21]
+            else:
+                task_data['github_project'] = ''
+            
             task_list.append(task_data)
         
         logger.debug(f"返回 {len(task_list)} 个任务")
@@ -132,6 +156,30 @@ def register_task_routes(app):
             task_data['gitlab_project'] = task[17]
         else:
             task_data['gitlab_project'] = ''
+        
+        # 如果有第18个元素（github_url），则添加到task_data中
+        if len(task) > 18:
+            task_data['github_url'] = task[18]
+        else:
+            task_data['github_url'] = ''
+        
+        # 如果有第19个元素（github_token），则添加到task_data中
+        if len(task) > 19:
+            task_data['github_token'] = task[19]
+        else:
+            task_data['github_token'] = ''
+        
+        # 如果有第20个元素（github_events），则添加到task_data中
+        if len(task) > 20:
+            task_data['github_events'] = task[20]
+        else:
+            task_data['github_events'] = ''
+        
+        # 如果有第21个元素（github_project），则添加到task_data中
+        if len(task) > 21:
+            task_data['github_project'] = task[21]
+        else:
+            task_data['github_project'] = ''
         
         logger.debug(f"返回任务详情: {task_data['name']}")
         return jsonify({'success': True, 'task': task_data})
