@@ -13,7 +13,7 @@ def get_db_connection():
 
 def init_db():
     """初始化数据库"""
-    logger.info("初始化数据库")
+    logger.info("***正在初始化AC-bot数据库...")
     conn = get_db_connection()
     cursor = conn.cursor()
     # 创建任务表
@@ -52,7 +52,7 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
-    logger.info("数据库初始化完成")
+    logger.info("***数据库初始化完成!")
 
 def execute_query(query, params=(), fetch_one=False, commit=False):
     """执行SQL查询"""

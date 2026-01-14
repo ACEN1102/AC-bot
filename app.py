@@ -6,7 +6,8 @@ from controllers.log_controller import register_log_routes
 from controllers.test_controller import register_test_routes
 from controllers.gitlab_controller import register_gitlab_routes
 from scheduler.task_scheduler import update_scheduler
-import logging
+
+from utils.init import log_init, start_init
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = 'feishu_bot_secret_key'
@@ -30,16 +31,7 @@ def send_static(path):
 if __name__ == '__main__':
     init_db()
     update_scheduler()
-    try:
-        from werkzeug.serving import WSGIRequestHandler
-        original_log_request = WSGIRequestHandler.log_request
-        def custom_log_request(self, *args, **kwargs):
-            path = self.path
-            if path not in ['/api/logs', '/api/tasks','/static/css','/static/css/style.css','/static/js/app.js','/']:
-                original_log_request(self, *args, **kwargs)
-        WSGIRequestHandler.log_request = custom_log_request
-    except Exception as e:
-        print(f"加载日志过滤功能失败: {str(e)}")
-
+    log_init()
+    start_init()
     app.run(host='0.0.0.0', port=9096, debug=False)
 

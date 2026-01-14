@@ -10,14 +10,14 @@ scheduler.start()
 
 def update_scheduler():
     """更新调度器任务"""
-    logger.info("开始更新调度器任务")
+    logger.info("*** 开始更新调度器任务...")
     # 移除所有任务
     for job in scheduler.get_jobs():
         scheduler.remove_job(job.id)
     
     # 添加所有启用的任务
     tasks = execute_query("SELECT id, cron_expression, days_of_week FROM tasks WHERE enabled = 1")
-    logger.info(f"共获取到 {len(tasks)} 个启用的任务")
+    logger.info(f"*** 共获取到 {len(tasks)} 个启用的任务！")
     
     for task_info in tasks:
         try:
@@ -68,7 +68,7 @@ def update_scheduler():
                 id=f"task_{task_id}",
                 misfire_grace_time=300  # 允许5分钟的执行延迟
             )
-            logger.info(f"成功添加任务 {task_id} 到调度器")
+            logger.info(f"*** 成功添加任务 {task_id} 到调度器")
         except Exception as e:
             logger.error(f"添加任务 {task_id} 到调度器失败: {str(e)}")
-    logger.info("调度器任务更新完成")
+    logger.info("*** 调度器任务更新完成！")
